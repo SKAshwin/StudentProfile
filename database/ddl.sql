@@ -1,7 +1,8 @@
 CREATE TABLE Module(
     code VARCHAR(7) NOT NULL,
     credits INT NOT NULL,
-    PRIMARY KEY(code)
+    PRIMARY KEY(code),
+    UNIQUE(code)
 );
 
 CREATE TABLE Student(
