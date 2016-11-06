@@ -1,19 +1,6 @@
 #!/usr/bin/python3
-
-#A Module has a module code, modular credits, a score and a semester.
-#From these primary attributes, supplied in the constructor, several secondary attributes are
-#derived.
-#These are subject,acadlevel,module_num,type_digit and suffix
+import constants as c
 class Module:
-    class YearType:
-        pass
-    class ModuleType:
-        pass
-    class SuffixType:
-        pass
-    FOUNDATION,INTERMEDIATE,ADVANCED = YearType(),YearType(),YearType()
-    ELECTIVE,CORE,ENRICHMENT,HONOR = ModuleType(),ModuleType(),ModuleType(),ModuleType()
-    PRECLUSION,CORE_PREREQ,MT_IN_LIEU,EXTERNAL = SuffixType(),SuffixType(),SuffixType(),SuffixType()
     @staticmethod
     def SUBJECT_CODES():
         return ('AE','CL','EL','GM','MA','PE','AR','CM','EN','HD','MH','TH',
@@ -74,13 +61,13 @@ class Module:
     #Returns a ModuleType instance; one of 4 constants
     def module_type(self):
         if(is_enrichment()):
-            return ENRICHMENT
+            return c.ENRICHMENT
         elif(is_core()):
-            return CORE
+            return c.CORE
         elif(is_elective()):
-            return ELECTIVE
+            return c.ELECTIVE
         elif(is_honor()):
-            return HONOR
+            return c.HONOR
         return None
 
 
@@ -92,11 +79,11 @@ class Module:
         return self.acadlevel==5 or self.acadlevel==6
     def year_type(self):
         if is_foundation() :
-            return FOUNDATION
+            return c.FOUNDATION
         elif is_intermediate():
-            return INTERMEDIATE
+            return c.INTERMEDIATE
         elif is_advanced():
-            return ADVANCED
+            return c.ADVANCED
 
     #checks if module is a mother tongue module
     #used in calculating grad cap
@@ -113,26 +100,32 @@ class Module:
         return self.suffix=='V'
     def suffix_type():
         if is_preclusion():
-            return PRECLUSION
+            return c.PRECLUSION
         elif is_core_prereq():
-            return CORE_PREREQ
+            return c.CORE_PREREQ
         elif is_mt_inlieu():
-            return MT_IN_LIEU
+            return c.MT_IN_LIEU
         elif is_external():
             return EXTERNAL
 
-ma5404 = Module(code='MA5404',mc=2)
-print(ma5404.is_advanced())
-print(ma5404.is_core())
-print(ma5404.subject)
 
+
+print(c.UNSATISFACTORY>c.MERIT)
+print(c.PASS>c.FAIL)
+print(c.MERIT>c.PASS)
+print(c.MERIT>c.DISTINCTION)
 #A report on the specific score a student received on a module, and the semester it was
-#taken
+#taken, as well as what year it was read (can be different from acadlevel)
+#score can be a numerical value or a DaVinciGrade/EnrichmentGrade
+#Note that it is *always* safe, by definition, to multiply the score attribute with
+#anything else, and it is also safe to compare to score of THE SAME TYPE
+#No other operation on .score is defined behaviour
 class ModuleReport:
-    def __init__(self, module, score, semester):
+    def __init__(self, module, score, semester, year):
         self.module = module
         self.score = score
         self.semester = semester
+        self.year = year
 
 #The transcript consists of *all* the modules taken by a student
 #the report for a specific semester should be represented by a ReportCard instance
