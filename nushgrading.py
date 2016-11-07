@@ -1,5 +1,9 @@
 #!/usr/bin/python3
+
+#TODO: test transcript class
 import constants as c
+
+#Modules are immutable and hence thread_safe
 class Module:
     @staticmethod
     def SUBJECT_CODES():
@@ -109,23 +113,81 @@ class Module:
             return EXTERNAL
 
 
-
-print(c.UNSATISFACTORY>c.MERIT)
-print(c.PASS>c.FAIL)
-print(c.MERIT>c.PASS)
-print(c.MERIT>c.DISTINCTION)
 #A report on the specific score a student received on a module, and the semester it was
 #taken, as well as what year it was read (can be different from acadlevel)
 #score can be a numerical value or a DaVinciGrade/EnrichmentGrade
 #Note that it is *always* safe, by definition, to multiply the score attribute with
 #anything else, and it is also safe to compare to score of THE SAME TYPE
 #No other operation on .score is defined behaviour
+
+#ModuleReport instances are immutable
 class ModuleReport:
     def __init__(self, module, score, semester, year):
         self.module = module
         self.score = score
         self.semester = semester
         self.year = year
+        self.mc = module.mc #convenience
+
+#CAP is a datatype used to hold cap total scores and mcs, to prevent loss of information about
+#the specific credits and scores that resulted in the numeric CAP score
+#For example, a cap score of 4.0 could be the result of 100 total score and 25 credits, or
+#120 total score and 30 credits. By using a CAP object to encapsulate this data (and calling
+#.cap() to get a numeric value), more can be understood about a particular CAP score, and
+#the addition of new modules or summing of CAP scores can be done properly.
+
+#CAP instances are immutable. The + 
+#operation and the add_module method create new instances. Hence, it is thread safe
+class CAP:
+    #Two initializers.
+    
+    #CAP() is an empty cap score, with 0 score and 0 MC. Calling .cap() on an empty CAP() will throw
+    #an error
+
+    #CAP(total_score,total_mc), where total_score and total_mc are the total score (obtained by
+    #multiplying every component score with the credits) and sum of credits respectively.
+
+    def __init__(self,total_score=0,total_mc=0):
+        self.score = total_score
+        self.mc = total_mc
+    #returns new instance
+    def add_module(self, module_report):
+        return CAP(self.score + module_report.score*module_report.mc,self.mc+module_report.mc)
+    def decompose(self):
+        return (self.score,self.mc)
+    def cap(self):
+        return self.score/self.mc
+    #Creates a new CAP instance by summing total score and total_mc
+    #not the same as summing up cap and averaging (as used in grad cap calculations)
+    def __add__(self, other):
+        return CAP(self.score+other.score,self.mc+other.mc)
+    def __gt__(self, other):
+        return self.cap()>other.cap()
+    def __lt__(self, other):
+        return other.cap()>self.cap()
+    def __ge__(self, other):
+        return not self < other
+    def __le__(self, other):
+        return not self > other
+    def __eq__(self, other):
+        return self.cap()==other.cap()
+    def __ne__(self, other):
+        return self.cap()!=other.cap()
+    def __str__(self):
+        return str(self.decompose())
+    __radd__ = __add__
+cap1 = CAP(100,20)
+cap2 = CAP(120,30)
+print((cap1+cap2).cap())
+print((cap1.cap()+cap2.cap())/2)
+print(cap1>cap2)
+print(cap1<cap2+cap1)
+print(cap1==CAP(120,24))
+ma5404 = Module('ma5404',2)
+ma5404r = ModuleReport(module=ma5404, score=4.5, semester=1, year=5)
+ma5106 = Module('ma5106',5)
+ma5106r = ModuleReport(module=ma5106, score=5.0, semester=1, year=5)
+print(CAP().add_module(ma5404r).add_module(ma5106r))
 
 #The transcript consists of *all* the modules taken by a student
 #the report for a specific semester should be represented by a ReportCard instance
@@ -140,5 +202,27 @@ class Transcript:
         self.modules.append(module_report)
     def remove_module(module_report):
         self.modules.remove(module_report)
-    def __core_cap():
-        pass
+    def __core_bi_cap(self, year_type, mt):
+        core_cap = CAP()
+        for module_report in self.modules:
+            module = module_report.module
+            if module.year_type()!=year_type or (not mt and module.is_mt()):
+                continue
+            if not module.is_elective() and not module.is_enrichment():
+                core_cap.add_module(module_report)
+        return core_cap
+    def biennial_cap(self, year_type, mt):
+        core_cap = self.__core_bi_cap(year_type, mt)
+        base_cap = core_cap.cap()
+        for module_report in self.modules:
+            module = module_report.module
+            if year_type!=module.year_type():
+                continue
+            if module.is_elective() and module_report.score>base_cap:
+                core_cap.add_module(module_report)
+        return core_cap
+    def grad_cap(self):
+        mt_cap = self.biennial_cap(c.INTERMEDIATE,mt=True).cap() + self.biennial_cap(c.ADVANCED, mt=True).cap()
+        no_mt_cap = self.biennial_cap(c.INTERMEDIATE,mt=False).cap() + self.biennial_cap(c.ADVANCED, mt=False).cap()
+        return max(mt_cap,no_mt_cap)/2
+
