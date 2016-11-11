@@ -64,13 +64,13 @@ class Module:
         return self.type_digit==4
     #Returns a ModuleType instance; one of 4 constants
     def module_type(self):
-        if(is_enrichment()):
+        if(self.is_enrichment()):
             return c.ENRICHMENT
-        elif(is_core()):
+        elif(self.is_core()):
             return c.CORE
-        elif(is_elective()):
+        elif(self.is_elective()):
             return c.ELECTIVE
-        elif(is_honor()):
+        elif(self.is_honor()):
             return c.HONOR
         return None
 
@@ -82,11 +82,11 @@ class Module:
     def is_advanced(self):
         return self.acadlevel==5 or self.acadlevel==6
     def year_type(self):
-        if is_foundation() :
+        if self.is_foundation() :
             return c.FOUNDATION
-        elif is_intermediate():
+        elif self.is_intermediate():
             return c.INTERMEDIATE
-        elif is_advanced():
+        elif self.is_advanced():
             return c.ADVANCED
 
     #checks if module is a mother tongue module
@@ -111,6 +111,9 @@ class Module:
             return c.MT_IN_LIEU
         elif is_external():
             return EXTERNAL
+    def __repr__(self):
+        return 'Module(code={},mc={})'.format(self.code,self.mc)
+    __str__ = __repr__
 
 
 #A report on the specific score a student received on a module, and the semester it was
@@ -175,19 +178,9 @@ class CAP:
         return self.cap()!=other.cap()
     def __str__(self):
         return str(self.decompose())
+    def __repr__(self):
+        return 'CAP(total_score={},total_mc={})'.format(self.score,self.mc)
     __radd__ = __add__
-cap1 = CAP(100,20)
-cap2 = CAP(120,30)
-print((cap1+cap2).cap())
-print((cap1.cap()+cap2.cap())/2)
-print(cap1>cap2)
-print(cap1<cap2+cap1)
-print(cap1==CAP(120,24))
-ma5404 = Module('ma5404',2)
-ma5404r = ModuleReport(module=ma5404, score=4.5, semester=1, year=5)
-ma5106 = Module('ma5106',5)
-ma5106r = ModuleReport(module=ma5106, score=5.0, semester=1, year=5)
-print(CAP().add_module(ma5404r).add_module(ma5106r))
 
 #The transcript consists of *all* the modules taken by a student
 #the report for a specific semester should be represented by a ReportCard instance
@@ -225,4 +218,5 @@ class Transcript:
         mt_cap = self.biennial_cap(c.INTERMEDIATE,mt=True).cap() + self.biennial_cap(c.ADVANCED, mt=True).cap()
         no_mt_cap = self.biennial_cap(c.INTERMEDIATE,mt=False).cap() + self.biennial_cap(c.ADVANCED, mt=False).cap()
         return max(mt_cap,no_mt_cap)/2
+        
 

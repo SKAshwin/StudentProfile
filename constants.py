@@ -6,6 +6,7 @@ class ModuleType:
 class SuffixType:
     pass
 
+
 FOUNDATION,INTERMEDIATE,ADVANCED = YearType(),YearType(),YearType()
 ELECTIVE,CORE,ENRICHMENT,HONOR = ModuleType(),ModuleType(),ModuleType(),ModuleType()
 PRECLUSION,CORE_PREREQ,MT_IN_LIEU,EXTERNAL = SuffixType(),SuffixType(),SuffixType(),SuffixType()
@@ -14,6 +15,9 @@ PRECLUSION,CORE_PREREQ,MT_IN_LIEU,EXTERNAL = SuffixType(),SuffixType(),SuffixTyp
 YEAR_TYPES = [FOUNDATION, INTERMEDIATE, ADVANCED]
 MODULE_TYPES = [ELECTIVE,CORE,ENRICHMENT,HONOR]
 SUFFIX_TYPES = [PRECLUSION, CORE_PREREQ, MT_IN_LIEU, EXTERNAL]
+
+
+
 
 #Types used for non-numerical scores. Can be for da vinci, or for enrichment
 # MERIT can be used for either da vinci or enrichment, so it subclasses both
@@ -33,7 +37,6 @@ SUFFIX_TYPES = [PRECLUSION, CORE_PREREQ, MT_IN_LIEU, EXTERNAL]
 #This is for convenience - so you can multiple mc by score for all
 #modules (for cap calculation purposes), without the davinci/enrichment modules throwing an error
 #Will always return 0
-
 class DaVinciGrade:
     def __gt__(self,other):
         return _quantify_dv_grades(self)>_quantify_dv_grades(other)
@@ -46,6 +49,8 @@ class DaVinciGrade:
     def __mul__(self,other):
         return 0
     __rmul__ = __mul__
+    def __str__(self):
+        return _var_to_string(self)
 class EnrichmentGrade:
     def __gt__(self,other):
         return _quantify_en_grades(self)>_quantify_en_grades(other)
@@ -57,6 +62,8 @@ class EnrichmentGrade:
         return _quantify_en_grades(self)>=_quantify_en_grades(other)
     def __mul__(self,other):
         return 0
+    def __str__(self):
+        return _var_to_string(self)
     __rmul__ = __mul__
 #MERIT can compare to either an EnrichmentGrade or a DaVinci grade
 #So the function to be used for quantifying depends on the other argument
@@ -111,5 +118,20 @@ def _quantify_en_grades(engrade):
         elif engrade == FAIL:
             return 0
         return False
-
+def _var_to_string(var):
+    if var == EXCELLENT:
+        return 'EXCELLENT'
+    elif var==MERIT:
+        return 'MERIT'
+    elif var==SATISFACTORY:
+        return 'SATISFACTORY'
+    elif var==UNSATISFACTORY:
+        return 'UNSATISFACTORY'
+    elif var==DISTINCTION:
+        return 'DISTINCTION'
+    elif var==PASS:
+        return 'PASS'
+    elif var==FAIL:
+        return 'FAIL'
+    return 'UNRECOGNIZED'
 
