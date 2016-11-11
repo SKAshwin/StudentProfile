@@ -2,7 +2,7 @@
 
 #TODO: test transcript class
 import constants as c
-
+import common
 #Modules are immutable and hence thread_safe
 class Module:
     @staticmethod
@@ -46,6 +46,7 @@ class Module:
 
 
     def __init__(self,code,mc):
+        common.verify_input({code:str,mc:int})
         self.code = code
         self.mc = mc
         self.subject = Module.calc_subject(code)
@@ -126,6 +127,7 @@ class Module:
 #ModuleReport instances are immutable
 class ModuleReport:
     def __init__(self, module, score, semester, year):
+        common.verify_input({module:Module,score:float,semester:int, year:int})
         self.module = module
         self.score = score
         self.semester = semester
@@ -151,10 +153,12 @@ class CAP:
     #multiplying every component score with the credits) and sum of credits respectively.
 
     def __init__(self,total_score=0,total_mc=0):
+        common.verify_input({total_score:int,total_mc:int})
         self.score = total_score
         self.mc = total_mc
     #returns new instance
     def add_module(self, module_report):
+        common.verify_input({module_report:ModuleReport})
         return CAP(self.score + module_report.score*module_report.mc,self.mc+module_report.mc)
     def decompose(self):
         return (self.score,self.mc)
@@ -192,10 +196,12 @@ class Transcript:
         self.modules = []
     #add a ModuleReport instance to this transcript
     def add_module(module_report):
+        common.verify_input({module_report:ModuleReport})
         self.modules.append(module_report)
     def remove_module(module_report):
         self.modules.remove(module_report)
     def __core_bi_cap(self, year_type, mt):
+        common.verify_input({year_type:c.YearType, mt:bool})
         core_cap = CAP()
         for module_report in self.modules:
             module = module_report.module

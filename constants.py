@@ -1,9 +1,12 @@
 #These are the types used for describing various module attributes
-class YearType:
+class ModuleAttributes:
+    def __str__(self):
+        return __str_type(self)
+class YearType(ModuleAttributes):
     pass
-class ModuleType:
+class ModuleType(ModuleAttributes):
     pass
-class SuffixType:
+class SuffixType(ModuleAttributes):
     pass
 
 
@@ -16,6 +19,11 @@ YEAR_TYPES = [FOUNDATION, INTERMEDIATE, ADVANCED]
 MODULE_TYPES = [ELECTIVE,CORE,ENRICHMENT,HONOR]
 SUFFIX_TYPES = [PRECLUSION, CORE_PREREQ, MT_IN_LIEU, EXTERNAL]
 
+def __str_type(cons):
+    d = {FOUNDATION:'FOUNDATION',INTERMEDIATE:'INTERMEDIATE',ADVANCED:'ADVANCED',
+    ELECTIVE:'ELECTIVE',CORE:'CORE',ENRICHMENT:'ENRICHMENT',HONOR:'HONOR',
+    PRECLUSION:'PRECLUSION',CORE_PREREQ:'CORE_PREREQ',MT_IN_LIEU:'MT_IN_LIEU',EXTERNAL:'EXTERNAL'}
+    return d[cons]
 
 
 
