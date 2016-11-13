@@ -126,13 +126,20 @@ class Module:
 
 #ModuleReport instances are immutable
 class ModuleReport:
-    def __init__(self, module, score, semester, year):
-        common.verify_input({module:Module,score:float,semester:int, year:int})
+    def __init__(self, module, grade, year, semester):
+        common.verify_input({module:Module,semester:int, year:int})
         self.module = module
-        self.score = score
+        try:
+            self.score = grade.score
+        except:
+            self.score = grade #for enrichment modules etc
         self.semester = semester
         self.year = year
         self.mc = module.mc #convenience
+        self.grade = grade
+    def __str__(self):
+        return 'ModuleReport({},{},{},{})'.format(self.module,self.grade,self.year,self.semester)
+    __repr__ = __str__
 
 #CAP is a datatype used to hold cap total scores and mcs, to prevent loss of information about
 #the specific credits and scores that resulted in the numeric CAP score
@@ -153,7 +160,7 @@ class CAP:
     #multiplying every component score with the credits) and sum of credits respectively.
 
     def __init__(self,total_score=0,total_mc=0):
-        common.verify_input({total_score:int,total_mc:int})
+        common.verify_input({total_mc:int},(total_score,int,float))
         self.score = total_score
         self.mc = total_mc
     #returns new instance
@@ -195,34 +202,57 @@ class Transcript:
         self.identity = identity
         self.modules = []
     #add a ModuleReport instance to this transcript
-    def add_module(module_report):
+    def add_module(self,module_report):
         common.verify_input({module_report:ModuleReport})
         self.modules.append(module_report)
-    def remove_module(module_report):
+    def remove_module(self,module_report):
         self.modules.remove(module_report)
     def __core_bi_cap(self, year_type, mt):
         common.verify_input({year_type:c.YearType, mt:bool})
         core_cap = CAP()
+        #print("===============")
+        #print("Ignored Modules")
+        #print("===============")
+                
         for module_report in self.modules:
             module = module_report.module
             if module.year_type()!=year_type or (not mt and module.is_mt()):
                 continue
             if not module.is_elective() and not module.is_enrichment():
-                core_cap.add_module(module_report)
+                core_cap = core_cap.add_module(module_report)
+            #else:
+                #print(module)
         return core_cap
     def biennial_cap(self, year_type, mt):
         core_cap = self.__core_bi_cap(year_type, mt)
+        #print(core_cap)
         base_cap = core_cap.cap()
+        #print("===============")
+        #print("Added Electives")
+        #print("===============")
+                
         for module_report in self.modules:
             module = module_report.module
             if year_type!=module.year_type():
                 continue
             if module.is_elective() and module_report.score>base_cap:
-                core_cap.add_module(module_report)
+                #print(module)
+                core_cap = core_cap.add_module(module_report)
         return core_cap
-    def grad_cap(self):
-        mt_cap = self.biennial_cap(c.INTERMEDIATE,mt=True).cap() + self.biennial_cap(c.ADVANCED, mt=True).cap()
-        no_mt_cap = self.biennial_cap(c.INTERMEDIATE,mt=False).cap() + self.biennial_cap(c.ADVANCED, mt=False).cap()
-        return max(mt_cap,no_mt_cap)/2
-        
+    def grad_cap(self,prerounding=False):
+        if not prerounding:
+            mt_cap = self.biennial_cap(c.INTERMEDIATE,mt=True).cap() + self.biennial_cap(c.ADVANCED, mt=True).cap()
+            no_mt_cap = self.biennial_cap(c.INTERMEDIATE,mt=False).cap() + self.biennial_cap(c.ADVANCED, mt=False).cap()
+            #print(mt_cap/2)
+            #print(no_mt_cap/2)
+            return max(mt_cap,no_mt_cap)/2
+        else:
+            mt_cap_i = common.round(self.biennial_cap(c.INTERMEDIATE,mt=True).cap(),1)
+            mt_cap_a = common.round(self.biennial_cap(c.ADVANCED, mt=True).cap(),1)
+            mt_cap = (mt_cap_i+mt_cap_a)/2
+            no_mt_cap_i = common.round(self.biennial_cap(c.INTERMEDIATE,mt=False).cap(),1)
+            no_mt_cap_a = common.round(self.biennial_cap(c.ADVANCED, mt=False).cap(),1)
+            no_mt_cap = (no_mt_cap_i+no_mt_cap_a)/2
+            return max(no_mt_cap,mt_cap)
+            
 

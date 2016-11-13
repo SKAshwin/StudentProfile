@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import sqlite3
 from nushgrading import *
-
+from math import ceil
 def load_modules(db='database/grading.db',table='Module'):
     conn = sqlite3.connect(db)
     query = "SELECT code,credits from {}".format(table)
@@ -48,4 +48,7 @@ def verify_input(*class_input_pairs):
         if not is_instance:
             raise TypeError('Expected one of {} but got {}'
                     .format(str(classes),val))
+
+def round(num, dec):
+    return ceil(num*(10**dec))/(10**dec)
 

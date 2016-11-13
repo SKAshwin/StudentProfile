@@ -1,3 +1,14 @@
+class Grade:
+    def __init__(self, rep, score):
+        self.rep = rep
+        self.score = score
+    def __str__(self):
+        return self.rep
+    def __repr__(self):
+        return 'Grade({},{})'.format(self.rep,self.score)
+
+
+
 #These are the types used for describing various module attributes
 class ModuleAttributes:
     def __str__(self):
@@ -18,6 +29,11 @@ PRECLUSION,CORE_PREREQ,MT_IN_LIEU,EXTERNAL = SuffixType(),SuffixType(),SuffixTyp
 YEAR_TYPES = [FOUNDATION, INTERMEDIATE, ADVANCED]
 MODULE_TYPES = [ELECTIVE,CORE,ENRICHMENT,HONOR]
 SUFFIX_TYPES = [PRECLUSION, CORE_PREREQ, MT_IN_LIEU, EXTERNAL]
+
+MODULE_ATTRIBUTES = {'FOUNDATION':FOUNDATION, 'INTERMEDIATE':INTERMEDIATE, 'ADVANCED': ADVANCED,
+                        'ELECTIVE':ELECTIVE, 'CORE':CORE, 'ENRICHMENT': ENRICHMENT, 'HONOR': HONOR,
+                        'PRECLUSION':PRECLUSION, 'CORE_PREREQ':CORE_PREREQ, 'MT_IN_LIEU': MT_IN_LIEU,
+                        'EXTERNAL':EXTERNAL}
 
 def __str_type(cons):
     d = {FOUNDATION:'FOUNDATION',INTERMEDIATE:'INTERMEDIATE',ADVANCED:'ADVANCED',
@@ -105,6 +121,13 @@ FAIL = EnrichmentGrade()
 DV_GRADES = [EXCELLENT,MERIT,SATISFACTORY,UNSATISFACTORY]
 ENR_GRADES =[DISTINCTION,MERIT,PASS,FAIL]
 
+GRADES = {'A+': Grade('A+',5.0), 'A': Grade('A',5.0), 'A-': Grade('A-',4.5),
+            'B+': Grade('B+',4.0), 'B': Grade('B',3.5), 'B-':Grade('B-', 3.0),
+            'C+': Grade('C+',2.5), 'C': Grade('C',2.0), 'D+': Grade('D+',1.5),
+            'D': Grade('D',1.0), 'F':Grade('F', 0.0),
+            'EXCELLENT':EXCELLENT,'MERIT':MERIT,'SATISFACTORY':SATISFACTORY,
+            'UNSATISFACTORY':UNSATISFACTORY,'DISTINCTION':DISTINCTION,'PASS':PASS,
+            'FAIL':FAIL}
 #Here is the quantification functions
 def _quantify_dv_grades(dvgrade):
         if dvgrade == EXCELLENT:
