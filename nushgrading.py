@@ -192,6 +192,21 @@ class CAP:
         return 'CAP(total_score={},total_mc={})'.format(self.score,self.mc)
     __radd__ = __add__
 
+class CAPStream:
+    def __init__(self, module_reports):
+        self.modules = module_reports
+    def filter(self, predicate):
+        new =  []
+        for mr in self.modules:
+            if predicate(mr):
+                new.append(mr)
+        return CAPStream(new)
+    def collect(self):
+        cap = CAP()
+        for mr in self.modules:
+            cap = cap.add_module(mr)
+        return cap
+
 #The transcript consists of *all* the modules taken by a student
 #the report for a specific semester should be represented by a ReportCard instance
 #transcript should be able to generate ReportCards, as well as give biennial cap and
@@ -206,6 +221,8 @@ class Transcript:
         self.modules.append(module_report)
     def remove_module(self,module_report):
         self.modules.remove(module_report)
+    def stream(self):
+        return CAPStream(self.modules)
     def accumulate_cap(self, predicate, init=CAP()):
         core_cap = init
         for module_report in self.modules:
