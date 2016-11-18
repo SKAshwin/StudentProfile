@@ -160,7 +160,6 @@ class CAP:
     #multiplying every component score with the credits) and sum of credits respectively.
 
     def __init__(self,total_score=0,total_mc=0):
-        common.verify_input({total_mc:int},(total_score,int,float))
         self.score = total_score
         self.mc = total_mc
     #returns new instance
@@ -198,7 +197,7 @@ class CAP:
 #transcript should be able to generate ReportCards, as well as give biennial cap and
 #grad cap
 class Transcript:
-    def __init__(self, identity):
+    def __init__(self, identity=None):
         self.identity = identity
         self.modules = []
     #add a ModuleReport instance to this transcript
@@ -207,6 +206,15 @@ class Transcript:
         self.modules.append(module_report)
     def remove_module(self,module_report):
         self.modules.remove(module_report)
+    def accumulate_cap(self, predicate, init=CAP()):
+        core_cap = init
+        for module_report in self.modules:
+            if not predicate(module_report):
+                continue
+            else:
+                print("Accepted Module: {}, score:{}".format(module_report.module,module_report.score))
+                core_cap = core_cap.add_module(module_report)
+        return core_cap
     def __core_bi_cap(self, year_type, mt):
         common.verify_input({year_type:c.YearType, mt:bool})
         core_cap = CAP()
@@ -255,4 +263,19 @@ class Transcript:
             no_mt_cap = (no_mt_cap_i+no_mt_cap_a)/2
             return max(no_mt_cap,mt_cap)
             
-
+class Student:
+    def __init__(self, name, identity, nric, birthdate):
+       self.name = name
+       self.id = identity
+       self.nric = nric
+       self.bdate = birthdate
+class ReportCard:
+    def __init__(self, student, year, semester, sem_gpa, cap):
+        self.student = student
+        self.year = year
+        self.semester = semester
+        self.sem_gpa = sem_gpa
+        self.sem_gpa_score = sem_gpa.cap()
+        self.cap = cap
+        self.cap_score = cap.cap()
+        self.total_mc = cap.mc 
