@@ -223,47 +223,12 @@ class Transcript:
         self.modules.remove(module_report)
     def stream(self):
         return CAPStream(self.modules)
-    def accumulate_cap(self, predicate, init=CAP()):
-        core_cap = init
-        for module_report in self.modules:
-            if not predicate(module_report):
-                continue
-            else:
-                print("Accepted Module: {}, score:{}".format(module_report.module,module_report.score))
-                core_cap = core_cap.add_module(module_report)
-        return core_cap
-    def __core_bi_cap(self, year_type, mt):
-        common.verify_input({year_type:c.YearType, mt:bool})
-        core_cap = CAP()
-        #print("===============")
-        #print("Ignored Modules")
-        #print("===============")
-                
-        for module_report in self.modules:
-            module = module_report.module
-            if module.year_type()!=year_type or (not mt and module.is_mt()):
-                continue
-            if not module.is_elective() and not module.is_enrichment():
-                core_cap = core_cap.add_module(module_report)
-            #else:
-                #print(module)
-        return core_cap
     def biennial_cap(self, year_type, mt):
-        core_cap = self.__core_bi_cap(year_type, mt)
-        #print(core_cap)
+        valid_modules = self.stream().filter(lambda mr: mr.module.year_type()==year_type and (mt or not mr.module.is_mt()))
+        core_cap = valid_modules.filter(lambda mr: not mr.module.is_elective() and not mr.module.is_enrichment()).collect()
         base_cap = core_cap.cap()
-        #print("===============")
-        #print("Added Electives")
-        #print("===============")
-                
-        for module_report in self.modules:
-            module = module_report.module
-            if year_type!=module.year_type():
-                continue
-            if module.is_elective() and module_report.score>base_cap:
-                #print(module)
-                core_cap = core_cap.add_module(module_report)
-        return core_cap
+        good_electives = valid_modules.filter(lambda mr: mr.module.is_elective() and mr.score > base_cap).collect()
+        return core_cap + good_electives
     def grad_cap(self,prerounding=False):
         if not prerounding:
             mt_cap = self.biennial_cap(c.INTERMEDIATE,mt=True).cap() + self.biennial_cap(c.ADVANCED, mt=True).cap()
