@@ -3,6 +3,7 @@
 #TODO: test transcript class
 import constants as c
 import common
+import inspect
 #Modules are immutable and hence thread_safe
 class Module:
     @staticmethod
@@ -124,10 +125,17 @@ class Module:
 #anything else, and it is also safe to compare to score of THE SAME TYPE
 #No other operation on .score is defined behaviour
 
+#Note that module_report exposes all contents (non-internal, so not beginning with a _) 
+#of the module object passed to it in construction
+#this includes methods and attributes. It does this dynamically, so passing something other than a
+#module will result in different methods being exposed. Note that if the module object
+#has an attribute that ModuleReport already has, it can only be accessed a
+#instance.module_{}, where instance is the instance name and {} is the attribute
+#Hence no attributes of ModuleReport can be overriden by a module attribute
+
 #ModuleReport instances are immutable
 class ModuleReport:
     def __init__(self, module, grade, year, semester):
-        common.verify_input({module:Module,semester:int, year:int})
         self.module = module
         try:
             self.score = grade.score
@@ -135,8 +143,15 @@ class ModuleReport:
             self.score = grade #for enrichment modules etc
         self.semester = semester
         self.year = year
-        self.mc = module.mc #convenience
         self.grade = grade
+        #expose entire contents of Module
+        for name,command in inspect.getmembers(module):
+            if name[0] == '_':#ignore all internal functions
+                continue
+            if name in ('module,score,semester,year,grade'):
+                exec("self.module_{} = module.{}".format(name,name))
+            else:
+                exec("self.{} = module.{}".format(name,name))
     def __str__(self):
         return 'ModuleReport({},{},{},{})'.format(self.module,self.grade,self.year,self.semester)
     __repr__ = __str__
@@ -206,6 +221,12 @@ class CAPStream:
         for mr in self.modules:
             cap = cap.add_module(mr)
         return cap
+    @staticmethod
+    def is_year_sem(year, sem):
+        return lambda mr: mr.year == year and mr.sem == sem
+    @staticmethod
+    def is_core():
+        return lambda mr: not mr.is_elective() and not mr.is_enrichment()
 
 #The transcript consists of *all* the modules taken by a student
 #the report for a specific semester should be represented by a ReportCard instance
@@ -224,10 +245,12 @@ class Transcript:
     def stream(self):
         return CAPStream(self.modules)
     def biennial_cap(self, year_type, mt):
-        valid_modules = self.stream().filter(lambda mr: mr.module.year_type()==year_type and (mt or not mr.module.is_mt()))
-        core_cap = valid_modules.filter(lambda mr: not mr.module.is_elective() and not mr.module.is_enrichment()).collect()
+        valid_modules = self.stream().filter(lambda mr: mr.year_type()==year_type 
+                            and (mt or not mr.is_mt()))
+        core_cap = valid_modules.filter(CAPStream.is_core()).collect()
         base_cap = core_cap.cap()
-        good_electives = valid_modules.filter(lambda mr: mr.module.is_elective() and mr.score > base_cap).collect()
+        good_electives = valid_modules.filter(lambda mr: mr.is_elective() and mr.score > base_cap
+        ).collect()
         return core_cap + good_electives
     def grad_cap(self,prerounding=False):
         if not prerounding:
