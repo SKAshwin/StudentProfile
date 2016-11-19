@@ -207,26 +207,50 @@ class CAP:
         return 'CAP(total_score={},total_mc={})'.format(self.score,self.mc)
     __radd__ = __add__
 
+#CAPStream API used for manipulation of lists of module_reports, to filter out some
+#and calculate cap for what remains, in a functional style.
+#A CAPStream instance tracks a list of valid module reports, which can then be filtered out
+#further using filter(), or a CAP derived from that list can be calculated using collect()
+#There are also static methods that produce lambda used for common filters
+
+#Example usage: all_modules.filter(lambda mr: mr.year == 3), returns a CAPStream of all modules
+#from yar 3. Then core cap from that year can be calculated by 
+#filter(lambda mr: mr.is_core()).collect()
 class CAPStream:
-    def __init__(self, module_reports):
+    def __init__(self, module_reports, filters = []):
         self.modules = module_reports
+        self.filters = filters
     def filter(self, predicate):
+        return CAPStream(self.modules,self.filters + [predicate])
+    def _apply(self):
         new =  []
         for mr in self.modules:
-            if predicate(mr):
+            keep = True
+            for predicate in self.filters:
+                if not predicate(mr):
+                    keep = False
+            if keep:
                 new.append(mr)
-        return CAPStream(new)
+        return new
     def collect(self):
         cap = CAP()
-        for mr in self.modules:
+        for mr in self._apply():
             cap = cap.add_module(mr)
         return cap
+    
+    #returns lambda checking if module_report is of that year and that semester
+    #sem argument can be left blank for lambda checking only for that year
     @staticmethod
-    def is_year_sem(year, sem):
+    def is_year_sem(year, sem=False):
+        if(not sem):
+            return lambda mr: mr.year==year
         return lambda mr: mr.year == year and mr.sem == sem
     @staticmethod
     def is_core():
         return lambda mr: not mr.is_elective() and not mr.is_enrichment()
+    @staticmethod
+    def good_electives(base_cap):
+        return lambda mr: mr.is_elective() and mr.score > base_cap
 
 #The transcript consists of *all* the modules taken by a student
 #the report for a specific semester should be represented by a ReportCard instance
@@ -249,8 +273,7 @@ class Transcript:
                             and (mt or not mr.is_mt()))
         core_cap = valid_modules.filter(CAPStream.is_core()).collect()
         base_cap = core_cap.cap()
-        good_electives = valid_modules.filter(lambda mr: mr.is_elective() and mr.score > base_cap
-        ).collect()
+        good_electives = valid_modules.filter(CAPStream.good_electives(base_cap)).collect()
         return core_cap + good_electives
     def grad_cap(self,prerounding=False):
         if not prerounding:
@@ -275,7 +298,7 @@ class Student:
        self.nric = nric
        self.bdate = birthdate
 class ReportCard:
-    def __init__(self, student, year, semester, sem_gpa, cap):
+    def __init__(self, student, year, semester, sem_gpa, cap, modules, subject_cap):
         self.student = student
         self.year = year
         self.semester = semester
@@ -283,4 +306,6 @@ class ReportCard:
         self.sem_gpa_score = sem_gpa.cap()
         self.cap = cap
         self.cap_score = cap.cap()
-        self.total_mc = cap.mc 
+        self.total_mc = cap.mc
+        self.modules = modules
+        self.subject_cap = subject_cap
